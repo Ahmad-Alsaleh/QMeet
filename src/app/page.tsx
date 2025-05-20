@@ -1,61 +1,19 @@
-import Head from "next/head";
-
 export default function Home() {
   return (
-    <>
-      <Head>
-        <title>QMeet Control</title>
-        <meta name="description" content="QMeet Application Control" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100vh",
-          fontFamily: "sans-serif",
-          background: "#fafafa",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "2rem",
-            marginBottom: "1rem",
-            color: "#333",
-          }}
-        >
+    <main className="flex min-h-screen items-center justify-center px-4 py-8">
+      <div className="backdrop-blur-xl bg-white/70 border border-neutral-200 shadow-xl rounded-3xl px-8 py-10 w-full max-w-md text-center space-y-8">
+        <h1 className="text-3xl md:text-4xl font-semibold text-neutral-900">
           QMeet Control
         </h1>
-        <div style={{ display: "flex", gap: "1rem" }}>
-          <button
-            style={{
-              padding: "0.75rem 1.5rem",
-              background: "#0070f3",
-              color: "#fff",
-              border: "none",
-              borderRadius: "0.5rem",
-              cursor: "pointer",
-            }}
-          >
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <button className="w-full sm:w-auto rounded-xl bg-blue-600 px-6 py-3 text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
             Modify Shortcut
           </button>
-          <button
-            style={{
-              padding: "0.75rem 1.5rem",
-              background: "#ff4c4c",
-              color: "#fff",
-              border: "none",
-              borderRadius: "0.5rem",
-              cursor: "pointer",
-            }}
-          >
+          <button className="w-full sm:w-auto rounded-xl bg-red-500 px-6 py-3 text-white shadow hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 transition">
             Quit App
           </button>
         </div>
-      </main>
-    </>
+      </div>
+    </main>
   );
 }
