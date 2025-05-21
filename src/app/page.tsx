@@ -6,10 +6,10 @@ export default function Home() {
           QMeet Control
         </h1>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <button className="w-full sm:w-auto rounded-xl bg-blue-600 px-6 py-3 text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+          <button className="button w-full sm:w-auto rounded-xl bg-blue-600 px-6 py-3 text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
             Modify Shortcut
           </button>
-          <button className="w-full sm:w-auto rounded-xl bg-red-500 px-6 py-3 text-white shadow hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 transition">
+          <button className="button w-full sm:w-auto rounded-xl bg-red-500 px-6 py-3 text-white shadow hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 transition">
             Quit App
           </button>
         </div>
