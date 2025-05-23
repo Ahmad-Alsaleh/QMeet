@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "qmeet-gui",
+  "productName": "QMeet",
   "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "com.qmeet.dev",
   "build": {
     "frontendDist": "../src/app",
     "devUrl": "http://localhost:3000",
@@ -12,10 +12,10 @@
   "app": {
     "windows": [
       {
-        "title": "qmeet",
-        "width": 800,
+        "title": "QMeet",
+        "width": 360,
         "height": 600,
-        "resizable": true,
+        "resizable": false,
         "fullscreen": false
       }
     ],
