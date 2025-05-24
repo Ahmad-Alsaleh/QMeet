@@ -114,33 +114,24 @@ const ShortcutInput = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-5">
-      <div className="bg-white/95 backdrop-blur-lg rounded-3xl p-10 shadow-2xl max-w-lg w-full text-center">
-        <h1 className="text-4xl font-light text-gray-800 mb-8">
-          ⌨️ QMeet
-        </h1>
-
-        <div className="relative mb-8">
-          <input
-            ref={inputRef}
-            type="text"
-            value={currentShortcut}
-            onKeyDown={handleKeyDown}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            onContextMenu={handleContextMenu}
-            placeholder={isRecording ? "Press your shortcut keys..." : "Click here and press your shortcut keys..."}
-            className={`w-full p-5 text-lg border-3 rounded-2xl outline-none transition-all duration-300 text-center font-medium text-gray-800 ${isRecording
-              ? 'border-red-400 bg-red-50 animate-pulse shadow-lg shadow-red-200'
-              : 'border-gray-300 bg-gray-50 focus:border-indigo-400 focus:bg-white focus:shadow-lg focus:shadow-indigo-200'
-              }`}
-            readOnly
-          />
-          <div className="text-gray-600 text-sm mt-3 leading-relaxed">
-            Click the input field and press any combination of keys.
-          </div>
-        </div>
-
+    <div className="relative mb-8">
+      <input
+        ref={inputRef}
+        type="text"
+        value={currentShortcut}
+        onKeyDown={handleKeyDown}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        onContextMenu={handleContextMenu}
+        placeholder={isRecording ? "Press your shortcut keys..." : "Click here and press your shortcut keys..."}
+        className={`w-full p-5 text-lg border-3 rounded-2xl outline-none transition-all duration-300 text-center font-medium text-gray-800 ${isRecording
+          ? 'border-red-400 bg-red-50 animate-pulse shadow-lg shadow-red-200'
+          : 'border-gray-300 bg-gray-50 focus:border-indigo-400 focus:bg-white focus:shadow-lg focus:shadow-indigo-200'
+          }`}
+        readOnly
+      />
+      <div className="text-gray-600 text-sm mt-3 leading-relaxed">
+        Click the input field and press any combination of keys.
       </div>
     </div>
   );
