@@ -1,5 +1,4 @@
 'use client';
-import { invoke } from '@tauri-apps/api/core';
 import { exit } from '@tauri-apps/plugin-process';
 
 export default function Home() {

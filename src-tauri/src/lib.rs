@@ -3,7 +3,9 @@ use std::error::Error;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
+    // ActivationPolicy,
 };
+use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 pub fn run() {
@@ -11,6 +13,10 @@ pub fn run() {
     let meeting_url = generate_meeting_url();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::init(
+            MacosLauncher::LaunchAgent,
+            None,
+        ))
         .plugin(tauri_plugin_process::init())
         .setup(move |app| {
             if cfg!(debug_assertions) {
@@ -21,11 +27,18 @@ pub fn run() {
                 )?;
             }
 
+            // FIXME: since this is used now, ig no need for the html :)
+            // or you know what, maybe find a better tool to create
+            // trays/system-trays using rust.
+            // #[cfg(target_os = "macos")]
+            // app.set_activation_policy(ActivationPolicy::Accessory);
+
+            app.autolaunch().enable().unwrap();
+
             register_shortcut_listener(app, target_shortcut, meeting_url)?;
 
             let quit_menu_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&quit_menu_item])?;
-
             let icon = app.default_window_icon().unwrap().clone();
             TrayIconBuilder::new()
                 .icon(icon)
