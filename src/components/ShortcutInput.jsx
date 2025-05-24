@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 
 const ShortcutInput = () => {
-  const [currentShortcut, setCurrentShortcut] = useState('');
+  const [currentShortcut, setCurrentShortcut] = useState('Ctrl+Alt+P');
   const [isRecording, setIsRecording] = useState(false);
   const inputRef = useRef(null);
 
@@ -83,13 +83,11 @@ const ShortcutInput = () => {
 
     const keys = [];
 
-    // Add modifier keys
     if (e.ctrlKey) keys.push('Ctrl');
     if (e.altKey) keys.push('Alt');
     if (e.shiftKey) keys.push('Shift');
     if (e.metaKey) keys.push('Meta');
 
-    // add the main key (if it's not a modifier)
     const mainKey = getKeyName(e.key, e.code);
     if (mainKey && !['Control', 'Alt', 'Shift', 'Meta'].includes(mainKey)) {
       keys.push(mainKey);
