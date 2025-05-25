@@ -10,7 +10,6 @@ use tauri::{
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
-// a global state to store the current shortcut
 pub struct AppState {
     pub target_shortcut: Mutex<Shortcut>,
 }
@@ -24,6 +23,13 @@ impl Default for AppState {
             )),
         }
     }
+}
+
+#[tauri::command]
+fn unregister_target_shortcut(app: tauri::AppHandle) {
+    app.global_shortcut()
+        .unregister(*app.state::<AppState>().target_shortcut.lock().unwrap())
+        .unwrap();
 }
 
 #[tauri::command]
@@ -54,7 +60,10 @@ pub fn run() {
         ))
         .plugin(tauri_plugin_process::init())
         .manage(AppState::default())
-        .invoke_handler(tauri::generate_handler![update_target_shortcut])
+        .invoke_handler(tauri::generate_handler![
+            update_target_shortcut,
+            unregister_target_shortcut
+        ])
         .setup(move |app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(

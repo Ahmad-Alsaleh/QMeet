@@ -105,6 +105,7 @@ const ShortcutInput = () => {
       } catch (error) {
         // TODO: show an error message to the user in the frontend
         // and return to the previous shortcut
+        // TODO: treat ESC differently 
         console.error('Failed to update shortcut:', error);
       }
     }
@@ -112,12 +113,11 @@ const ShortcutInput = () => {
 
   const handleFocus = async () => {
     setIsRecording(true);
-    // await invoke('unregister_shortcut');
+    await invoke('unregister_target_shortcut');
   };
 
   const handleBlur = async () => {
     setIsRecording(false);
-    // await invoke('register_shortcut');
   };
 
   const handleContextMenu = (e) => {
