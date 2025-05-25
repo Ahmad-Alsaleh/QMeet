@@ -1,15 +1,50 @@
 use enigo::{Enigo, Keyboard as _};
 use std::error::Error;
+use std::str::FromStr;
+use std::sync::Mutex;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
-    // ActivationPolicy,
+    Manager,
 };
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
+// a global state to store the current shortcut
+pub struct AppState {
+    pub target_shortcut: Mutex<Shortcut>,
+}
+
+impl Default for AppState {
+    fn default() -> Self {
+        Self {
+            target_shortcut: Mutex::new(Shortcut::new(
+                Some(Modifiers::CONTROL | Modifiers::ALT),
+                Code::KeyP,
+            )),
+        }
+    }
+}
+
+#[tauri::command]
+fn update_target_shortcut(app: tauri::AppHandle, shortcut_str: String) -> Result<(), String> {
+    let shortcut = Shortcut::from_str(&shortcut_str)
+        .map_err(|e| format!("Failed to parse shortcut: {}", e))?;
+
+    let target_shortcut = &app.state::<AppState>().target_shortcut;
+
+    app.global_shortcut()
+        .unregister(*target_shortcut.lock().unwrap())
+        .unwrap();
+    *target_shortcut.lock().unwrap() = shortcut;
+    app.global_shortcut().register(shortcut).unwrap();
+
+    println!("Updated target shortcut to: {}", shortcut_str);
+
+    Ok(())
+}
+
 pub fn run() {
-    let target_shortcut = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::KeyP);
     let meeting_url = generate_meeting_url();
 
     tauri::Builder::default()
@@ -18,6 +53,8 @@ pub fn run() {
             None,
         ))
         .plugin(tauri_plugin_process::init())
+        .manage(AppState::default())
+        .invoke_handler(tauri::generate_handler![update_target_shortcut])
         .setup(move |app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -35,7 +72,8 @@ pub fn run() {
 
             app.autolaunch().enable().unwrap();
 
-            register_shortcut_listener(app, target_shortcut, meeting_url)?;
+            // TODO: remove `meeting_url` and add it to `AppState`
+            register_shortcut_listener(app, meeting_url)?;
 
             let quit_menu_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&quit_menu_item])?;
@@ -52,20 +90,20 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![my_custom_command])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
 fn register_shortcut_listener(
     app: &mut tauri::App,
-    target_shortcut: Shortcut,
     meeting_url: String,
 ) -> Result<(), Box<dyn Error>> {
     app.handle().plugin(
         tauri_plugin_global_shortcut::Builder::new()
-            .with_handler(move |_app, shortcut, event| {
-                if shortcut == &target_shortcut && matches!(event.state(), ShortcutState::Pressed) {
+            .with_handler(move |app, shortcut, event| {
+                if *shortcut == *app.state::<AppState>().target_shortcut.lock().unwrap()
+                    && event.state() == ShortcutState::Pressed
+                {
                     println!("Shortcut Pressed");
                     Enigo::new(&enigo::Settings::default())
                         .unwrap()
@@ -75,16 +113,12 @@ fn register_shortcut_listener(
             })
             .build(),
     )?;
-    app.global_shortcut().register(target_shortcut)?;
+    app.global_shortcut()
+        .register(*app.state::<AppState>().target_shortcut.lock().unwrap())?;
     Ok(())
 }
 
 pub fn generate_meeting_url() -> String {
     // TODO: this should use Google Meet API
     String::from("meet.google.com/xio-xfkn-wsm")
-}
-
-#[tauri::command]
-fn my_custom_command() {
-    println!("my custom command");
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 
 const ShortcutInput = () => {
   const [currentShortcut, setCurrentShortcut] = useState('Ctrl+Alt+P');
@@ -76,7 +77,7 @@ const ShortcutInput = () => {
     return key;
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = async (e) => {
     e.preventDefault();
 
     if (!isRecording) return;
@@ -96,15 +97,27 @@ const ShortcutInput = () => {
     if (keys.length > 0) {
       const shortcut = keys.join('+');
       setCurrentShortcut(shortcut);
+
+      // Update the backend with the new shortcut
+      try {
+        await invoke('update_target_shortcut', { shortcutStr: shortcut });
+        console.log('Shortcut updated successfully:', shortcut);
+      } catch (error) {
+        // TODO: show an error message to the user in the frontend
+        // and return to the previous shortcut
+        console.error('Failed to update shortcut:', error);
+      }
     }
   };
 
-  const handleFocus = () => {
+  const handleFocus = async () => {
     setIsRecording(true);
+    // await invoke('unregister_shortcut');
   };
 
-  const handleBlur = () => {
+  const handleBlur = async () => {
     setIsRecording(false);
+    // await invoke('register_shortcut');
   };
 
   const handleContextMenu = (e) => {
@@ -121,9 +134,8 @@ const ShortcutInput = () => {
         onFocus={handleFocus}
         onBlur={handleBlur}
         onContextMenu={handleContextMenu}
-        placeholder={isRecording ? "Press your shortcut keys..." : "Click here and press your shortcut keys..."}
         className={`w-full p-5 text-lg border-3 rounded-2xl outline-none transition-all duration-300 text-center font-medium text-gray-800 ${isRecording
-          ? 'border-red-400 bg-red-50 animate-pulse shadow-lg shadow-red-200'
+          ? 'border-blue-400 bg-blue-50 shadow-lg shadow-blue-200'
           : 'border-gray-300 bg-gray-50 focus:border-indigo-400 focus:bg-white focus:shadow-lg focus:shadow-indigo-200'
           }`}
         readOnly
