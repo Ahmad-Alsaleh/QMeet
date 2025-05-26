@@ -84,23 +84,37 @@ pub fn run() {
             // TODO: remove `meeting_url` and add it to `AppState`
             register_shortcut_listener(app, meeting_url)?;
 
-            let quit_menu_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&quit_menu_item])?;
-            let icon = app.default_window_icon().unwrap().clone();
-            TrayIconBuilder::new()
-                .icon(icon)
-                .menu(&menu)
-                .show_menu_on_left_click(true)
-                .on_menu_event(|app, event| match event.id.as_ref() {
-                    "quit" => app.exit(0),
-                    _ => unreachable!(),
-                })
-                .build(app)?;
+            build_tray(app);
 
             Ok(())
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+fn build_tray(app: &mut tauri::App) {
+    let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>).unwrap();
+    let settings = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>).unwrap();
+
+    let menu = Menu::with_items(app, &[&quit, &settings]).unwrap();
+
+    let icon = app.default_window_icon().unwrap().clone();
+
+    TrayIconBuilder::new()
+        .icon(icon)
+        .menu(&menu)
+        .show_menu_on_left_click(true)
+        .on_menu_event(|app, event| match event.id.as_ref() {
+            "quit" => app.exit(0),
+            "settings" => {
+                let window = app.get_webview_window("main").unwrap();
+                window.show().unwrap();
+                window.set_focus().unwrap();
+            }
+            _ => unreachable!(),
+        })
+        .build(app)
+        .unwrap();
 }
 
 fn register_shortcut_listener(
