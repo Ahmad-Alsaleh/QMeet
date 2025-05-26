@@ -1,12 +1,26 @@
-'use client';
-
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { readTextFile, BaseDirectory } from '@tauri-apps/plugin-fs';
 
 const ShortcutInput = () => {
-  const [currentShortcut, setCurrentShortcut] = useState('Ctrl+Alt+P');
+  const [currentShortcut, setCurrentShortcut] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const inputRef = useRef(null);
+
+  useEffect(() => {
+    const loadShortcut = async () => {
+      try {
+        const shortcut = await readTextFile('.target_shortcut', {
+          baseDir: BaseDirectory.AppData
+        });
+        setCurrentShortcut(shortcut);
+      } catch (error) {
+        console.error('Failed to read shortcut from file:', error);
+      }
+    };
+
+    loadShortcut();
+  }, []);
 
   const getKeyName = (key, code) => {
     const specialKeys = {
@@ -95,18 +109,15 @@ const ShortcutInput = () => {
     }
 
     if (keys.length > 0) {
+      const prev_shortcut = currentShortcut;
       const shortcut = keys.join('+');
       setCurrentShortcut(shortcut);
 
-      // Update the backend with the new shortcut
       try {
         await invoke('update_target_shortcut', { shortcutStr: shortcut });
         console.log('Shortcut updated successfully:', shortcut);
       } catch (error) {
-        // TODO: show an error message to the user in the frontend
-        // and return to the previous shortcut
-        // TODO: treat ESC differently 
-        console.error('Failed to update shortcut:', error);
+        setCurrentShortcut(prev_shortcut);
       }
     }
   };

@@ -1,7 +1,8 @@
 use enigo::{Enigo, Keyboard};
-use std::error::Error;
 use std::str::FromStr;
 use std::sync::Mutex;
+use std::{error::Error, fs};
+use tauri::AppHandle;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
@@ -26,14 +27,14 @@ impl Default for AppState {
 }
 
 #[tauri::command]
-fn unregister_target_shortcut(app: tauri::AppHandle) {
+fn unregister_target_shortcut(app: AppHandle) {
     app.global_shortcut()
         .unregister(*app.state::<AppState>().target_shortcut.lock().unwrap())
         .unwrap();
 }
 
 #[tauri::command]
-fn update_target_shortcut(app: tauri::AppHandle, shortcut_str: String) -> Result<(), String> {
+fn update_target_shortcut(app: AppHandle, shortcut_str: String) -> Result<(), String> {
     let shortcut = Shortcut::from_str(&shortcut_str)
         .map_err(|e| format!("Failed to parse shortcut: {}", e))?;
 
@@ -50,10 +51,17 @@ fn update_target_shortcut(app: tauri::AppHandle, shortcut_str: String) -> Result
     Ok(())
 }
 
+#[tauri::command]
+fn quit_app(app: AppHandle) {
+    store_persistent_state(&app);
+    app.exit(0);
+}
+
 pub fn run() {
     let meeting_url = generate_meeting_url();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
             None,
@@ -62,12 +70,15 @@ pub fn run() {
         .manage(AppState::default())
         .invoke_handler(tauri::generate_handler![
             update_target_shortcut,
-            unregister_target_shortcut
+            unregister_target_shortcut,
+            quit_app,
         ])
         .setup(move |app| {
             if cfg!(debug_assertions) {
-                enable_debug(app)?;
+                enable_debug(app).unwrap();
             }
+
+            load_persistent_state(app.handle());
 
             // hide the dock icon for macos
             #[cfg(target_os = "macos")]
@@ -78,7 +89,7 @@ pub fn run() {
             app.autolaunch().enable().unwrap();
 
             // TODO: remove `meeting_url` and add it to `AppState`
-            register_shortcut_listener(app, meeting_url)?;
+            register_shortcut_listener(app, meeting_url).unwrap();
 
             build_tray(app);
 
@@ -86,6 +97,37 @@ pub fn run() {
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+fn store_persistent_state(app: &AppHandle) {
+    let persistent_store_file = app.path().app_data_dir().unwrap().join(".target_shortcut");
+    fs::create_dir_all(persistent_store_file.parent().unwrap()).unwrap();
+
+    fs::write(
+        &persistent_store_file,
+        app.state::<AppState>()
+            .target_shortcut
+            .lock()
+            .unwrap()
+            .into_string(),
+    )
+    .unwrap();
+}
+
+fn load_persistent_state(app: &AppHandle) {
+    let persistent_store_file = app.path().app_data_dir().unwrap().join(".target_shortcut");
+    let target_shortcut = &app.state::<AppState>().target_shortcut;
+
+    if persistent_store_file.exists() {
+        let stored_target_shortcut = fs::read_to_string(persistent_store_file).unwrap();
+        *target_shortcut.lock().unwrap() = Shortcut::from_str(&stored_target_shortcut).unwrap();
+    } else {
+        fs::write(
+            &persistent_store_file,
+            target_shortcut.lock().unwrap().into_string(),
+        )
+        .unwrap();
+    }
 }
 
 fn disable_exit_on_close(app: &mut tauri::App) {
@@ -119,7 +161,7 @@ fn build_tray(app: &mut tauri::App) {
         .menu(&menu)
         .show_menu_on_left_click(true)
         .on_menu_event(|app, event| match event.id.as_ref() {
-            "quit" => app.exit(0),
+            "quit" => quit_app(app.clone()),
             "settings" => {
                 let window = app.get_webview_window("main").unwrap();
                 window.show().unwrap();

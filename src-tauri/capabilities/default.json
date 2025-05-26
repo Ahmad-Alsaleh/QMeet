@@ -7,6 +7,13 @@
   ],
   "permissions": [
     "core:default",
-    "process:allow-exit"
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [
+        {
+          "path": "$APPDATA/.target_shortcut"
+        }
+      ]
+    }
   ]
 }
