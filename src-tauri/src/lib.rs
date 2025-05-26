@@ -1,11 +1,11 @@
-use enigo::{Enigo, Keyboard as _};
+use enigo::{Enigo, Keyboard};
 use std::error::Error;
 use std::str::FromStr;
 use std::sync::Mutex;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
-    Manager,
+    ActivationPolicy, Manager,
 };
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
@@ -73,11 +73,17 @@ pub fn run() {
                 )?;
             }
 
-            // FIXME: since this is used now, ig no need for the html :)
-            // or you know what, maybe find a better tool to create
-            // trays/system-trays using rust.
-            // #[cfg(target_os = "macos")]
-            // app.set_activation_policy(ActivationPolicy::Accessory);
+            // hide the dock icon for macos
+            #[cfg(target_os = "macos")]
+            app.set_activation_policy(ActivationPolicy::Accessory);
+
+            let window = app.get_webview_window("main").unwrap();
+            window.clone().on_window_event(move |event| {
+                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                    api.prevent_close();
+                    window.hide().unwrap();
+                }
+            });
 
             app.autolaunch().enable().unwrap();
 
