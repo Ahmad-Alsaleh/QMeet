@@ -66,24 +66,14 @@ pub fn run() {
         ])
         .setup(move |app| {
             if cfg!(debug_assertions) {
-                app.handle().plugin(
-                    tauri_plugin_log::Builder::default()
-                        .level(log::LevelFilter::Info)
-                        .build(),
-                )?;
+                enable_debug(app)?;
             }
 
             // hide the dock icon for macos
             #[cfg(target_os = "macos")]
             app.set_activation_policy(ActivationPolicy::Accessory);
 
-            let window = app.get_webview_window("main").unwrap();
-            window.clone().on_window_event(move |event| {
-                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                    api.prevent_close();
-                    window.hide().unwrap();
-                }
-            });
+            disable_exit_on_close(app);
 
             app.autolaunch().enable().unwrap();
 
@@ -98,11 +88,29 @@ pub fn run() {
         .expect("error while running tauri application");
 }
 
-fn build_tray(app: &mut tauri::App) {
-    let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>).unwrap();
-    let settings = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>).unwrap();
+fn disable_exit_on_close(app: &mut tauri::App) {
+    let window = app.get_webview_window("main").unwrap();
+    window.clone().on_window_event(move |event| {
+        if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+            api.prevent_close();
+            window.hide().unwrap();
+        }
+    });
+}
 
-    let menu = Menu::with_items(app, &[&quit, &settings]).unwrap();
+fn enable_debug(app: &mut tauri::App) -> Result<(), Box<dyn Error>> {
+    app.handle().plugin(
+        tauri_plugin_log::Builder::default()
+            .level(log::LevelFilter::Info)
+            .build(),
+    )?;
+    Ok(())
+}
+
+fn build_tray(app: &mut tauri::App) {
+    let settings = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>).unwrap();
+    let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>).unwrap();
+    let menu = Menu::with_items(app, &[&settings, &quit]).unwrap();
 
     let icon = app.default_window_icon().unwrap().clone();
 
