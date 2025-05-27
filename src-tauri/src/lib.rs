@@ -75,10 +75,6 @@ pub fn run() {
             quit_app,
         ])
         .setup(move |app| {
-            if cfg!(debug_assertions) {
-                enable_debug(app).unwrap();
-            }
-
             load_persistent_state(app.handle());
 
             // hide the dock icon for macos
@@ -139,15 +135,6 @@ fn disable_exit_on_close(app: &mut tauri::App) {
             window.hide().unwrap();
         }
     });
-}
-
-fn enable_debug(app: &mut tauri::App) -> Result<(), Box<dyn Error>> {
-    app.handle().plugin(
-        tauri_plugin_log::Builder::default()
-            .level(log::LevelFilter::Info)
-            .build(),
-    )?;
-    Ok(())
 }
 
 fn build_tray(app: &mut tauri::App) {
