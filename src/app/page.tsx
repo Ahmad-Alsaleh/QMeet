@@ -1,5 +1,4 @@
 'use client';
-import { exit } from '@tauri-apps/plugin-process';
 import ShortcutInput from '@/components/ShortcutInput';
 import QuitButton from '@/components/QuitButton';
 
